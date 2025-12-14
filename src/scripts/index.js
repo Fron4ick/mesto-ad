@@ -9,6 +9,7 @@
 import { initialCards } from "./cards.js";
 import { createCardElement, deleteCard, likeCard } from "./components/card.js";
 import { openModalWindow, closeModalWindow, setCloseModalWindowEventListeners } from "./components/modal.js";
+import { enableValidation, clearValidation, checkInputValidity, toggleButtonState } from "./components/validation.js";
 
 // DOM узлы
 const placesWrap = document.querySelector(".places__list");
@@ -36,6 +37,16 @@ const profileAvatar = document.querySelector(".profile__image");
 const avatarFormModalWindow = document.querySelector(".popup_type_edit-avatar");
 const avatarForm = avatarFormModalWindow.querySelector(".popup__form");
 const avatarInput = avatarForm.querySelector(".popup__input");
+
+// Настройки валидации
+const validationSettings = {
+  formSelector: ".popup__form",
+  inputSelector: ".popup__input",
+  submitButtonSelector: ".popup__button",
+  inactiveButtonClass: "popup__button_disabled",
+  inputErrorClass: "popup__input_type_error",
+  errorClass: "popup__error_visible",
+};
 
 const handlePreviewPicture = ({ name, link }) => {
   imageElement.src = link;
@@ -82,18 +93,54 @@ cardForm.addEventListener("submit", handleCardFormSubmit);
 avatarForm.addEventListener("submit", handleAvatarFromSubmit);
 
 openProfileFormButton.addEventListener("click", () => {
-  profileTitleInput.value = profileTitle.textContent;
-  profileDescriptionInput.value = profileDescription.textContent;
+  const originalName = profileTitle.textContent;
+  const originalDescription = profileDescription.textContent;
+  
+  profileTitleInput.value = originalName;
+  profileDescriptionInput.value = originalDescription;
+  
+  // Сохраняем оригинальные значения для проверки изменений
+  const originalValues = {
+    'user-name': originalName,
+    'user-description': originalDescription
+  };
+  
+  clearValidation(profileForm, validationSettings);
+  
+  // Устанавливаем обработчики с оригинальными значениями
+  const inputList = Array.from(profileForm.querySelectorAll(validationSettings.inputSelector));
+  const buttonElement = profileForm.querySelector(validationSettings.submitButtonSelector);
+  
+  // Удаляем старые обработчики
+  inputList.forEach(inputElement => {
+    const newInput = inputElement.cloneNode(true);
+    inputElement.parentNode.replaceChild(newInput, inputElement);
+  });
+  
+  // Добавляем новые обработчики с оригинальными значениями
+  const newInputList = Array.from(profileForm.querySelectorAll(validationSettings.inputSelector));
+  newInputList.forEach(inputElement => {
+    inputElement.addEventListener('input', () => {
+      checkInputValidity(profileForm, inputElement, validationSettings);
+      toggleButtonState(newInputList, buttonElement, validationSettings, originalValues);
+    });
+  });
+  
+  // Начальное состояние кнопки
+  toggleButtonState(newInputList, buttonElement, validationSettings, originalValues);
+  
   openModalWindow(profileFormModalWindow);
 });
 
 profileAvatar.addEventListener("click", () => {
   avatarForm.reset();
+  clearValidation(avatarForm, validationSettings);
   openModalWindow(avatarFormModalWindow);
 });
 
 openCardFormButton.addEventListener("click", () => {
   cardForm.reset();
+  clearValidation(cardForm, validationSettings);
   openModalWindow(cardFormModalWindow);
 });
 
@@ -113,3 +160,6 @@ const allPopups = document.querySelectorAll(".popup");
 allPopups.forEach((popup) => {
   setCloseModalWindowEventListeners(popup);
 });
+
+// Включение валидации всех форм
+enableValidation(validationSettings);
