@@ -9,7 +9,7 @@ export const showInputError = (formElement, inputElement, errorMessage, settings
 // Функция скрытия ошибки
 export const hideInputError = (formElement, inputElement, settings) => {
   const errorElement = formElement.querySelector(`#${inputElement.id}-error`);
-  inputElement.classList.remove(settings.inputErrorClass);
+  inputElement.classList.remove(settings.inputErrorClass);-
   errorElement.classList.remove(settings.errorClass);
   errorElement.textContent = '';
 };
