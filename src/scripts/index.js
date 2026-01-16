@@ -15,6 +15,16 @@ import {
 // DOM узлы
 const placesWrap = document.querySelector(".places__list");
 
+// Селекторы для статистики
+const logo = document.querySelector(".header__logo");
+const infoModal = document.querySelector(".popup_type_info");
+const infoList = infoModal.querySelector(".popup__info");
+const infoUsersList = infoModal.querySelector(".popup__list");
+
+// Шаблоны для статистики
+const infoDefinitionTemplate = document.querySelector("#popup-info-definition-template").content;
+const userPreviewTemplate = document.querySelector("#popup-info-user-preview-template").content;
+
 // Попап редактирования профиля
 const profileFormModalWindow = document.querySelector(".popup_type_edit");
 const profileForm = profileFormModalWindow.querySelector(".popup__form");
@@ -69,6 +79,66 @@ const renderLoading = (isLoading, buttonElement, initialText = "Сохранит
   } else {
     buttonElement.textContent = initialText;
   }
+};
+
+// --- Функции для Варианта 2 (Статистика) ---
+
+const formatDate = (date) =>
+  date.toLocaleDateString("ru-RU", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+const createInfoString = (term, description) => {
+  const element = infoDefinitionTemplate.querySelector(".popup__info-item").cloneNode(true);
+  element.querySelector(".popup__info-term").textContent = term;
+  element.querySelector(".popup__info-description").textContent = description;
+  return element;
+};
+
+const createUserPreview = (userData) => {
+  const element = userPreviewTemplate.querySelector(".popup__list-item").cloneNode(true);
+  const img = element.querySelector("img");
+  img.src = userData.avatar;
+  img.alt = userData.name;
+  return element;
+};
+
+const handleLogoClick = () => {
+  getCards()
+    .then((cards) => {
+      // Очистка старого содержимого
+      infoList.innerHTML = "";
+      infoUsersList.innerHTML = "";
+
+      // 1. Добавляем общее кол-во
+      infoList.append(createInfoString("Всего карточек:", cards.length));
+
+      // 2. Добавляем даты (createdAt приходит строкой с сервера)
+      if (cards.length > 0) {
+        // Последняя в массиве — самая старая (первая созданная)
+        const firstCreated = cards[cards.length - 1].createdAt;
+        // Первая в массиве — самая новая (последняя созданная)
+        const lastCreated = cards[0].createdAt;
+
+        infoList.append(createInfoString("Первая создана:", formatDate(new Date(firstCreated))));
+        infoList.append(createInfoString("Последняя создана:", formatDate(new Date(lastCreated))));
+      }
+
+      // 3. Выводим уникальных авторов
+      const owners = {};
+      cards.forEach(card => {
+        owners[card.owner._id] = card.owner;
+      });
+      
+      Object.values(owners).forEach(owner => {
+        infoUsersList.append(createUserPreview(owner));
+      });
+
+      openModalWindow(infoModal);
+    })
+    .catch((err) => console.log(err));
 };
 
 // --- Обработчики ---
@@ -172,6 +242,10 @@ const handleCardFormSubmit = (evt) => {
 profileForm.addEventListener("submit", handleProfileFormSubmit);
 cardForm.addEventListener("submit", handleCardFormSubmit);
 avatarForm.addEventListener("submit", handleAvatarFormSubmit);
+
+// Слушатель на логотип
+logo.addEventListener("click", handleLogoClick);
+logo.style.cursor = "pointer"; // Чтобы было понятно, что кликабельно
 
 // Открытие профиля
 openProfileFormButton.addEventListener("click", () => {
