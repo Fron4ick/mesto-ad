@@ -111,25 +111,33 @@ const handleLogoClick = () => {
       // Очистка старого содержимого
       infoList.innerHTML = "";
       infoUsersList.innerHTML = "";
+      
+      // Устанавливаем заголовок попапа (он пустой в твоем HTML)
+      infoModal.querySelector(".popup__title").textContent = "Статистика проекта";
+      infoModal.querySelector(".popup__text").textContent = "Авторы:";
 
       // 1. Добавляем общее кол-во
       infoList.append(createInfoString("Всего карточек:", cards.length));
 
-      // 2. Добавляем даты (createdAt приходит строкой с сервера)
-      if (cards.length > 0) {
-        // Последняя в массиве — самая старая (первая созданная)
+      // 2. Добавляем даты
+      if (cards && cards.length > 0) {
+        // Последняя в массиве — самая старая (CreatedAt)
         const firstCreated = cards[cards.length - 1].createdAt;
-        // Первая в массиве — самая новая (последняя созданная)
+        // Первая в массиве — самая новая
         const lastCreated = cards[0].createdAt;
 
         infoList.append(createInfoString("Первая создана:", formatDate(new Date(firstCreated))));
         infoList.append(createInfoString("Последняя создана:", formatDate(new Date(lastCreated))));
+      } else {
+        infoList.append(createInfoString("Данные:", "Карточек пока нет"));
       }
 
       // 3. Выводим уникальных авторов
       const owners = {};
       cards.forEach(card => {
-        owners[card.owner._id] = card.owner;
+        if (card.owner && card.owner._id) {
+          owners[card.owner._id] = card.owner;
+        }
       });
       
       Object.values(owners).forEach(owner => {
@@ -138,7 +146,9 @@ const handleLogoClick = () => {
 
       openModalWindow(infoModal);
     })
-    .catch((err) => console.log(err));
+    .catch((err) => {
+      console.error("Ошибка при получении карточек для статистики:", err);
+    });
 };
 
 // --- Обработчики ---
