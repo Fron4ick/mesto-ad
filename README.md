@@ -5,3 +5,4 @@ https://github.com/Fron4ick/mesto-ad
 ![изображение live-server](image.png)
 Live-server является расширением VSCode
 ~~try deploy mesto project~~
+~~try after change settings api token~~
