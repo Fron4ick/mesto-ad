@@ -97,58 +97,75 @@ const createInfoString = (term, description) => {
   return element;
 };
 
-const createUserPreview = (userData) => {
+const createUserPreview = (userData, cardCount, index) => {
   const element = userPreviewTemplate.querySelector(".popup__list-item").cloneNode(true);
-  const img = element.querySelector("img");
+  const avatarContainer = element.querySelector(".popup__avatar-container");
+  const img = element.querySelector(".popup__list-item_badge");
+  const nameSpan = element.querySelector(".popup__list-item_name");
+  const countSpan = element.querySelector(".popup__list-item_count");
+
   img.src = userData.avatar;
   img.alt = userData.name;
+  nameSpan.textContent = userData.name;
+  countSpan.textContent = `${cardCount} шт.`;
+
+  // Цветные обводки для топ-3
+  if (index === 0) avatarContainer.style.backgroundColor = "#FFD700"; // Золото
+  else if (index === 1) avatarContainer.style.backgroundColor = "#C0C0C0"; // Серебро
+  else if (index === 2) avatarContainer.style.backgroundColor = "#CD7F32"; // Бронза
+
   return element;
 };
 
 const handleLogoClick = () => {
   getCards()
     .then((cards) => {
-      // Очистка старого содержимого
+      // Очистка старых данных перед открытием
       infoList.innerHTML = "";
       infoUsersList.innerHTML = "";
       
-      // Устанавливаем заголовок попапа (он пустой в твоем HTML)
-      infoModal.querySelector(".popup__title").textContent = "Статистика проекта";
-      infoModal.querySelector(".popup__text").textContent = "Авторы:";
+      infoModal.querySelector(".popup__title").textContent = "Статистика и лидеры";
+      infoModal.querySelector(".popup__text").textContent = "Рейтинг авторов:";
 
-      // 1. Добавляем общее кол-во
+      // 1. Собираем статистику по пользователям
+      const userStats = {};
+      cards.forEach(card => {
+        const id = card.owner._id;
+        if (!userStats[id]) {
+          userStats[id] = { user: card.owner, count: 0 };
+        }
+        userStats[id].count++;
+      });
+
+      const sortedUsers = Object.values(userStats).sort((a, b) => b.count - a.count);
+
+      // 2. Добавляем старые пункты (всего карт, даты)
       infoList.append(createInfoString("Всего карточек:", cards.length));
+      infoList.append(createInfoString("Всего участников:", sortedUsers.length));
+      
+      if (cards.length > 0) {
+        // Первая созданная — последняя в массиве cards
+        const firstDate = new Date(cards[cards.length - 1].createdAt);
+        // Последняя созданная — первая в массиве cards
+        const lastDate = new Date(cards[0].createdAt);
 
-      // 2. Добавляем даты
-      if (cards && cards.length > 0) {
-        // Последняя в массиве — самая старая (CreatedAt)
-        const firstCreated = cards[cards.length - 1].createdAt;
-        // Первая в массиве — самая новая
-        const lastCreated = cards[0].createdAt;
-
-        infoList.append(createInfoString("Первая создана:", formatDate(new Date(firstCreated))));
-        infoList.append(createInfoString("Последняя создана:", formatDate(new Date(lastCreated))));
-      } else {
-        infoList.append(createInfoString("Данные:", "Карточек пока нет"));
+        infoList.append(createInfoString("Первая создана:", formatDate(firstDate)));
+        infoList.append(createInfoString("Последняя создана:", formatDate(lastDate)));
       }
 
-      // 3. Выводим уникальных авторов
-      const owners = {};
-      cards.forEach(card => {
-        if (card.owner && card.owner._id) {
-          owners[card.owner._id] = card.owner;
-        }
-      });
-      
-      Object.values(owners).forEach(owner => {
-        infoUsersList.append(createUserPreview(owner));
+      // 3. Добавляем список лидеров (иконка + имя + кол-во под ней)
+      infoUsersList.style.display = "flex";
+      infoUsersList.style.flexWrap = "wrap";
+      infoUsersList.style.justifyContent = "center";
+      infoUsersList.style.gap = "20px";
+
+      sortedUsers.forEach((data, index) => {
+        infoUsersList.append(createUserPreview(data.user, data.count, index));
       });
 
       openModalWindow(infoModal);
     })
-    .catch((err) => {
-      console.error("Ошибка при получении карточек для статистики:", err);
-    });
+    .catch((err) => console.log("Ошибка статистики:", err));
 };
 
 // --- Обработчики ---
