@@ -188,7 +188,7 @@ const handleLikeCard = (likeButton, cardId, likeCountElement) => {
       likeCountElement.textContent = updatedCard.likes.length;
     })
     .catch((err) => {
-      console.log(err);
+      console.log(err?.response?.data ?? err);
     });
 };
 

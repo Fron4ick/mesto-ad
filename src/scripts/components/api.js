@@ -77,6 +77,6 @@ export const changeLikeStatus = (cardId, isLiked) => {
     return axios.delete(`/cards/${cardId}/likes`, config).then(getResponseData);
   } else {
     // Если лайка нет, отправляем PUT
-    return axios.put(`/cards/${cardId}/likes`, null, config).then(getResponseData);
+    return axios.put(`/cards/${cardId}/likes`, {}, config).then(getResponseData);
   }
 };
